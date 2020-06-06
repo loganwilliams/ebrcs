@@ -97,7 +97,7 @@ export default new Vuex.Store({
 
   actions: {
     async loadData({ commit }) {
-      let req = await fetch("http://192.241.215.152:3000/calls");
+      let req = await fetch("http://api.ebrcs.live/calls");
       let calls = await req.json();
 
       commit("setCalls", calls);
