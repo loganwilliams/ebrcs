@@ -96,9 +96,8 @@
 <script>
 // TODO:
 // Scroll everything according to offset based on last server sync
-// Use cue of new messages to play rather than a time based cursor
-// Add the ability to turn groups on and off
 
+import ResizeObserver from "resize-observer-polyfill";
 import * as d3 from "d3";
 import moment from "moment";
 import { Howl, Howler } from "howler";
