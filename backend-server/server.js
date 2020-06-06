@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const app = express();
 const db = require("./queries");
 const port = 3000;
+var cors = require('cors')
 
 app.use(bodyParser.json());
 app.use(
@@ -18,7 +19,7 @@ app.get("/", (request, response) => {
 // app.get('/users', db.getUsers)
 // app.get('/users/:id', db.getUserById)
 app.post("/call", db.addCall);
-app.get("/calls", db.getCalls);
+app.get("/calls", cors(), db.getCalls);
 // app.put('/users/:id', db.updateUser)
 // app.delete('/users/:id', db.deleteUser)
 
