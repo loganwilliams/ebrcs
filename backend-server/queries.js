@@ -17,7 +17,7 @@ const addCall = (request, response) => {
     start_time,
     stop_time,
     encrypted,
-    filename
+    filename,
   } = request.body;
 
   if (+length === 0) return;
@@ -35,6 +35,23 @@ const addCall = (request, response) => {
   );
 };
 
+const getCalls = (request, response) => {
+  const t = request.query.time ? new Date(request.query.time) : Date.now();
+  t = new Date(t - 1000 * 60 * 30);
+  console.log(t);
+
+  pool.query(
+    "SELECT * FROM users ORDER BY start_time DESC WHERE start_time > " + t,
+    (error, results) => {
+      if (error) {
+        throw error;
+      }
+      response.status(200).json(results.rows);
+    }
+  );
+};
+
 module.exports = {
   addCall,
+  getCalls,
 };
