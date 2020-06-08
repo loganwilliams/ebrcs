@@ -2,14 +2,17 @@
   <div class="timeline" ref="container">
     <svg :width="width" :height="height">
       <g class="legend">
-        <g v-for="tg in Object.keys(yIndex)" :key="tg">
+        <g
+          v-for="tg in Object.keys(yIndex)"
+          :key="tg"
+          :style="{
+              transform: `translate(0px,${yScale(yIndex[tg])}px)`,
+            }"
+        >
           <text
             :x="width - label_padding + 10"
             :y="0"
             :dy="10"
-            :style="{
-              transform: `translate(0px,${yScale(yIndex[tg])}px)`,
-            }"
             :class="{ muted: $store.state.muted_talkgroups[tg] }"
             @click="
               $store.state.muted_talkgroups[tg]
@@ -18,9 +21,9 @@
             "
           >
             {{
-              $store.state.talkgroups[tg]
-                ? $store.state.talkgroups[tg]["Alpha Tag"]
-                : "Talkgroup " + tg
+            $store.state.talkgroups[tg]
+            ? $store.state.talkgroups[tg]["Alpha Tag"]
+            : "Talkgroup " + tg
             }}
           </text>
           <line :x1="0" :x2="width" :y1="0" :y2="0" />
@@ -39,26 +42,15 @@
             :x2="0"
           />
         </g>
-        <g v-for="tick in xTicks" :key="tick.valueOf()">
-          <line
-            :style="{
+        <g
+          v-for="tick in xTicks"
+          :key="tick.valueOf()"
+          :style="{
               transform: `translate(${scaleDate(tick)}px,0px)`,
             }"
-            :y1="padding"
-            :y2="height"
-            :x1="0"
-            :x2="0"
-          />
-          <text
-            :style="{
-              transform: `translate(${scaleDate(tick) + 5}px,0px)`,
-            }"
-            :x="0"
-            :y="height - 5"
-            :dx="0"
-          >
-            {{ formatDate(tick) }}
-          </text>
+        >
+          <line :y1="padding" :y2="height" :x1="0" :x2="0" />
+          <text :x="0" :y="height - 5" :dx="5">{{ formatDate(tick) }}</text>
         </g>
       </g>
       <g>
@@ -115,7 +107,7 @@ export default {
       playing: [],
       listened: [],
       queue: [],
-      resizeObserver: null,
+      resizeObserver: null
     };
   },
   mounted() {
@@ -140,7 +132,7 @@ export default {
     playCall(call) {
       if (this.playing.indexOf(call.call_id) >= 0) {
         Howler.stop();
-        this.playing = this.playing.filter((s) => s !== call.call_id);
+        this.playing = this.playing.filter(s => s !== call.call_id);
         if (this.queue.length > 0) {
           this.playCall(this.queue.shift());
         }
@@ -152,7 +144,10 @@ export default {
         return;
       }
 
-      if (this.$store.state.muted_talkgroups[call.talkgroup]) {
+      if (
+        this.$store.state.muted_talkgroups[call.talkgroup] ||
+        call.encrypted
+      ) {
         if (this.queue.length > 0) {
           this.playCall(this.queue.shift());
         }
@@ -162,13 +157,13 @@ export default {
       let sound = new Howl({
         src: [
           "https://ebrcs.sfo2.digitaloceanspaces.com/" +
-            call.filename.split("audio_files/")[1].replace("wav", "m4a"),
-        ],
+            call.filename.split("audio_files/")[1].replace("wav", "m4a")
+        ]
       });
 
       sound.on("loaderror", () => {
         // sometimes we might play an audio file before it's been uploaded to S3, this will retry
-        this.playing = this.playing.filter((s) => s !== call.call_id);
+        this.playing = this.playing.filter(s => s !== call.call_id);
         this.playCall(call);
       });
 
@@ -178,7 +173,7 @@ export default {
       this.listened.push(call.call_id);
 
       sound.on("end", () => {
-        this.playing = this.playing.filter((s) => s !== call.call_id);
+        this.playing = this.playing.filter(s => s !== call.call_id);
         if (this.queue.length > 0) {
           this.playCall(this.queue.shift());
         }
@@ -187,7 +182,7 @@ export default {
 
     formatDate(t) {
       return moment(t).format("hh:mm A");
-    },
+    }
   },
   computed: {
     calls() {
@@ -235,14 +230,14 @@ export default {
       let sorted;
 
       if (this.$store.state.sort === "recent") {
-        sorted = this.calls.map((c) => c.talkgroup);
+        sorted = this.calls.map(c => c.talkgroup);
       }
 
       if (this.$store.state.sort === "talkgroup") {
-        sorted = this.calls.map((c) => c.talkgroup).sort((a, b) => +a - +b);
+        sorted = this.calls.map(c => c.talkgroup).sort((a, b) => +a - +b);
       }
 
-      sorted.forEach((tg) => {
+      sorted.forEach(tg => {
         if (!Object.prototype.hasOwnProperty.call(tgs, tg)) {
           tgs[tg] = i;
           i += 1;
@@ -275,7 +270,7 @@ export default {
       }
 
       ticks = ticks.filter(
-        (t) => this.xTicks.map((t) => t.valueOf()).indexOf(t.valueOf()) < 0
+        t => this.xTicks.map(t => t.valueOf()).indexOf(t.valueOf()) < 0
       );
 
       return ticks;
@@ -283,7 +278,7 @@ export default {
 
     autoplay() {
       return this.$store.state.playing;
-    },
+    }
   },
   watch: {
     // cursor(to, from) {
@@ -296,7 +291,7 @@ export default {
     autoplay(to) {
       if (to) {
         let to_play = this.calls.filter(
-          (c) => moment(c.start_time) > this.$store.state.playStart
+          c => moment(c.start_time) > this.$store.state.playStart
         );
         let reversed = to_play.slice().reverse();
 
@@ -314,17 +309,17 @@ export default {
       // add ids to play queue
 
       if (this.autoplay) {
-        let prev_ids = from.map((c) => c.call_id);
-        let new_calls = to.filter((c) => prev_ids.indexOf(c.call_id) < 0);
+        let prev_ids = from.map(c => c.call_id);
+        let new_calls = to.filter(c => prev_ids.indexOf(c.call_id) < 0);
         let reverse_order = new_calls.slice().reverse();
 
         this.queue.push(...reverse_order);
         if (this.playing.length === 0 && this.queue.length > 0)
           this.playCall(this.queue.shift());
       }
-    },
+    }
   },
-  mixins: [util],
+  mixins: [util]
 };
 </script>
 
@@ -399,8 +394,11 @@ svg {
       stroke: none;
     }
 
-    text {
+    g {
       transition: 1s transform;
+    }
+
+    text {
       cursor: pointer;
 
       &.muted {
@@ -410,8 +408,11 @@ svg {
   }
 
   .xaxis {
-    line {
+    g {
       transition: 1s transform;
+    }
+
+    line {
       stroke-width: 1px;
       stroke: #ccc;
 
@@ -419,10 +420,6 @@ svg {
         stroke: #444;
         opacity: 1;
       }
-    }
-
-    text {
-      transition: 1s transform;
     }
   }
 
