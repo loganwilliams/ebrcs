@@ -35,6 +35,32 @@ app.ws("/new", function (ws, req) {
             // console.log(error);
           });
       }
+    } else if (msg.type === "call_start") {
+      if (msg.call.encrypted === "true") {
+        let call = {
+          talkgroup: msg.call.talkgroup,
+          tgtag: msg.call.talkgrouptag,
+          start_time: new Date(parseInt(msg.call.startTime) * 1000),
+          stop_time: new Date((parseInt(msg.call.stopTime) + 5) * 1000),
+          length: 5,
+          encrypted: msg.call.encrypted === "true",
+          filename: "na",
+        };
+
+        console.log(call);
+
+        axios
+          .post("http://api.ebrcs.live/call", {
+            ...call,
+            key: process.env.KEY,
+          })
+          .then((res) => {
+            console.log(`statusCode: ${res.status}`);
+          })
+          .catch((error) => {
+            // console.log(error);
+          });
+      }
     }
   });
 });
