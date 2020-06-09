@@ -6,8 +6,8 @@
           v-for="tg in Object.keys(yIndex)"
           :key="tg"
           :style="{
-              transform: `translate(0px,${yScale(yIndex[tg])}px)`,
-            }"
+            transform: `translate(0px,${yScale(yIndex[tg])}px)`,
+          }"
         >
           <text
             :x="width - label_padding + 10"
@@ -21,9 +21,9 @@
             "
           >
             {{
-            $store.state.talkgroups[tg]
-            ? $store.state.talkgroups[tg]["Alpha Tag"]
-            : "Talkgroup " + tg
+              $store.state.talkgroups[tg]
+                ? $store.state.talkgroups[tg]["Alpha Tag"]
+                : "Talkgroup " + tg
             }}
           </text>
           <line :x1="0" :x2="width" :y1="0" :y2="0" />
@@ -46,8 +46,8 @@
           v-for="tick in xTicks"
           :key="tick.valueOf()"
           :style="{
-              transform: `translate(${scaleDate(tick)}px,0px)`,
-            }"
+            transform: `translate(${scaleDate(tick)}px,0px)`,
+          }"
         >
           <line :y1="padding" :y2="height" :x1="0" :x2="0" />
           <text :x="0" :y="height - 5" :dx="5">{{ formatDate(tick) }}</text>
@@ -73,12 +73,38 @@
           :height="(height - 2 * padding) / nYs"
           @click="call.encrypted ? null : playCall(call)"
           :class="{
-            playing: playing.indexOf(call.call_id) >= 0,
+            playing: playing.map((c) => c.call_id).indexOf(call.call_id) >= 0,
             queued: queue.map((q) => q.call_id).indexOf(call.call_id) >= 0,
             listened: listened.indexOf(call.call_id) >= 0,
             encrypted: call.encrypted,
             muted: $store.state.muted_talkgroups[call.talkgroup],
           }"
+        />
+      </g>
+      <g
+        :class="{ playhead: true, visible: playhead }"
+        :style="{
+          transform: `translate(${Math.floor(xScale(playhead))}px,0px)`,
+          transition: localShift === 0 ? 'none' : '1s transform',
+        }"
+      >
+        <line
+          :x1="Math.floor(localShift)"
+          :x2="Math.floor(localShift)"
+          :y1="0"
+          :y2="height"
+        />
+        <line
+          :x1="Math.floor(localShift) - 10"
+          :x2="Math.floor(localShift) + 10"
+          :y1="height"
+          :y2="height"
+        />
+        <line
+          :x1="Math.floor(localShift) - 10"
+          :x2="Math.floor(localShift) + 10"
+          :y1="1"
+          :y2="1"
         />
       </g>
     </svg>
@@ -107,7 +133,9 @@ export default {
       playing: [],
       listened: [],
       queue: [],
-      resizeObserver: null
+      resizeObserver: null,
+      playStart: false,
+      localShift: 0,
     };
   },
   mounted() {
@@ -130,9 +158,9 @@ export default {
     },
 
     playCall(call) {
-      if (this.playing.indexOf(call.call_id) >= 0) {
+      if (this.playing.map((c) => c.call_id).indexOf(call.call_id) >= 0) {
         Howler.stop();
-        this.playing = this.playing.filter(s => s !== call.call_id);
+        this.playing = this.playing.filter((s) => s.call_id !== call.call_id);
         if (this.queue.length > 0) {
           this.playCall(this.queue.shift());
         }
@@ -157,34 +185,56 @@ export default {
       let sound = new Howl({
         src: [
           "https://ebrcs.sfo2.digitaloceanspaces.com/" +
-            call.filename.split("audio_files/")[1].replace("wav", "m4a")
-        ]
+            call.filename.split("audio_files/")[1].replace("wav", "m4a"),
+        ],
       });
 
       sound.on("loaderror", () => {
         // sometimes we might play an audio file before it's been uploaded to S3, this will retry
-        this.playing = this.playing.filter(s => s !== call.call_id);
+        this.playing = this.playing.filter((s) => s.call_id !== call.call_id);
         this.playCall(call);
       });
 
       sound.play();
 
-      this.playing.push(call.call_id);
+      this.playing.push(call);
       this.listened.push(call.call_id);
+      let timer;
+
+      sound.on("play", () => {
+        this.playStart = moment();
+        this.localShift = 0;
+        timer = setInterval(() => {
+          this.localShift = this.xScale(moment()) - this.xScale(this.playStart);
+        }, 100);
+      });
 
       sound.on("end", () => {
-        this.playing = this.playing.filter(s => s !== call.call_id);
+        this.playing = this.playing.filter((s) => s.call_id !== call.call_id);
         if (this.queue.length > 0) {
           this.playCall(this.queue.shift());
         }
+        clearInterval(timer);
+        this.localShift = 0;
+        this.playStart = false;
       });
     },
 
     formatDate(t) {
       return moment(t).format("hh:mm A");
-    }
+    },
   },
   computed: {
+    playhead() {
+      if (!this.playStart) return false;
+      if (this.playing.length === 0) return false;
+
+      let current_position =
+        moment() - this.playStart + moment(this.playing[0].start_time);
+
+      return current_position;
+    },
+
     calls() {
       return this.$store.state.calls;
     },
@@ -230,14 +280,14 @@ export default {
       let sorted;
 
       if (this.$store.state.sort === "recent") {
-        sorted = this.calls.map(c => c.talkgroup);
+        sorted = this.calls.map((c) => c.talkgroup);
       }
 
       if (this.$store.state.sort === "talkgroup") {
-        sorted = this.calls.map(c => c.talkgroup).sort((a, b) => +a - +b);
+        sorted = this.calls.map((c) => c.talkgroup).sort((a, b) => +a - +b);
       }
 
-      sorted.forEach(tg => {
+      sorted.forEach((tg) => {
         if (!Object.prototype.hasOwnProperty.call(tgs, tg)) {
           tgs[tg] = i;
           i += 1;
@@ -270,7 +320,7 @@ export default {
       }
 
       ticks = ticks.filter(
-        t => this.xTicks.map(t => t.valueOf()).indexOf(t.valueOf()) < 0
+        (t) => this.xTicks.map((t) => t.valueOf()).indexOf(t.valueOf()) < 0
       );
 
       return ticks;
@@ -278,7 +328,7 @@ export default {
 
     autoplay() {
       return this.$store.state.playing;
-    }
+    },
   },
   watch: {
     // cursor(to, from) {
@@ -291,7 +341,7 @@ export default {
     autoplay(to) {
       if (to) {
         let to_play = this.calls.filter(
-          c => moment(c.start_time) > this.$store.state.playStart
+          (c) => moment(c.start_time) > this.$store.state.playStart
         );
         let reversed = to_play.slice().reverse();
 
@@ -309,17 +359,17 @@ export default {
       // add ids to play queue
 
       if (this.autoplay) {
-        let prev_ids = from.map(c => c.call_id);
-        let new_calls = to.filter(c => prev_ids.indexOf(c.call_id) < 0);
+        let prev_ids = from.map((c) => c.call_id);
+        let new_calls = to.filter((c) => prev_ids.indexOf(c.call_id) < 0);
         let reverse_order = new_calls.slice().reverse();
 
         this.queue.push(...reverse_order);
         if (this.playing.length === 0 && this.queue.length > 0)
           this.playCall(this.queue.shift());
       }
-    }
+    },
   },
-  mixins: [util]
+  mixins: [util],
 };
 </script>
 
@@ -330,6 +380,8 @@ export default {
 }
 
 svg {
+  shape-rendering: crispEdges;
+
   text {
     font-size: 12px;
     font-family: "Roboto Mono", monospace;
@@ -423,10 +475,17 @@ svg {
     }
   }
 
-  .cursor {
+  g.playhead {
+    transition: 1s transform;
+    stroke-opacity: 0;
+
     line {
-      stroke: white;
-      stroke-width: 2px;
+      stroke: #0099ff;
+      stroke-width: 1px;
+    }
+
+    &.visible {
+      stroke-opacity: 1;
     }
   }
 }
