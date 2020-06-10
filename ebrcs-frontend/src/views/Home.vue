@@ -182,7 +182,7 @@ div.button {
   min-width: 200px;
 
   @media only screen and (max-width: 800px) {
-    margin-top: 2px; 
+    margin-top: 2px;
     margin-bottom: 2px;
     font-size: 12px;
   }
