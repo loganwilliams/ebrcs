@@ -1,7 +1,7 @@
 <template>
   <div class="timeline" ref="container">
     <svg :width="width" :height="height">
-      <g transform="translate(0.5px,0.5px)">
+      <g transform="translate(0.5,0.5)">
         <g
           class="current-channel"
           v-if="playing.length > 0"
@@ -87,7 +87,7 @@
                   : 'Other'
               ),
             }"
-            :width="((width - 2 * padding) * call.length) / (30 * 60)"
+            :width="scaleDuration(call)"
             :height="(height - 2 * padding) / nYs"
             @click="call.encrypted ? null : playCall(call)"
             :class="{
@@ -161,6 +161,14 @@ export default {
 
     scaleDate(v) {
       return this.xScale(moment(v));
+    },
+
+    scaleDuration(call) {
+      let m = moment(call.start_time);
+      m.add(+call.length, "s");
+      let w = this.scaleDate(m) - this.scaleDate(moment(call.start_time));
+
+      return w;
     },
 
     playCall(call) {
