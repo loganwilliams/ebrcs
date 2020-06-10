@@ -18,7 +18,7 @@ const addCall = (request, response) => {
     stop_time,
     encrypted,
     filename,
-    key
+    key,
   } = request.body;
 
   if (key !== process.env.KEY) return;
@@ -39,10 +39,12 @@ const addCall = (request, response) => {
 
 const getCalls = (request, response) => {
   let t = request.query.time ? new Date(request.query.time) : Date.now();
-  t = new Date(t - 1000 * 60 * 30);
+  t = new Date(t - 1000 * 60 * 20);
 
   pool.query(
-    "SELECT * FROM calls WHERE start_time > '" + t.toISOString() + "' ORDER BY start_time DESC",
+    "SELECT * FROM calls WHERE start_time > '" +
+      t.toISOString() +
+      "' ORDER BY start_time DESC",
     (error, results) => {
       if (error) {
         throw error;
