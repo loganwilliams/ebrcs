@@ -29,7 +29,7 @@
             <text
               :x="width - label_padding + 10"
               :y="0"
-              :dy="10"
+              :dy="5 + (height - 2 * padding) / (2 * nYs)"
               :class="{ muted: $store.state.muted_talkgroups[tg] }"
               @click="
                 $store.state.muted_talkgroups[tg]
@@ -261,6 +261,10 @@ export default {
     },
 
     minDate() {
+      if (this.width < 600) {
+        return moment(this.maxDate).add(-5, "m");
+      }
+
       if (this.width < 800) {
         return moment(this.maxDate).add(-10, "m");
       }
@@ -314,6 +318,10 @@ export default {
     },
 
     xTicks() {
+      if (this.width < 500) {
+        return this.xScale.ticks(1);
+      }
+
       if (this.width < 800) {
         return this.xScale.ticks(2);
       }
@@ -327,7 +335,9 @@ export default {
 
     minorXTicks() {
       let ticks;
-      if (this.width < 800) {
+      if (this.width < 500) {
+        ticks = this.xScale.ticks(4);
+      } else if (this.width < 800) {
         ticks = this.xScale.ticks(7);
       } else if (this.width < 1400) {
         ticks = this.xScale.ticks(10);
@@ -385,7 +395,17 @@ export default {
 <style lang="scss" scoped>
 .timeline {
   width: 100%;
-  height: 500px;
+  height: calc(100% - 100px);
+  min-height: 320px;
+  max-height: 800px;
+
+  @media only screen and (max-width: 800px) {
+    height: calc(100% - 60px);
+  }
+
+  @media only screen and (max-width: 400px) {
+    height: calc(100% - 120px);
+  }
 }
 
 svg {

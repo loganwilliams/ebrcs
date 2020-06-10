@@ -55,7 +55,7 @@
       {{
         $store.state.talkgroups[playing[0].talkgroup]
           ? $store.state.talkgroups[playing[0].talkgroup]["Alpha Tag"]
-          : "Talkgroup " + tg
+          : "Talkgroup " + playing[0].talkgroup
       }}
     </text>
   </g>

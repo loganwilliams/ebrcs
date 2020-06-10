@@ -35,6 +35,7 @@
           :class="{
             button: true,
             active: $store.getters.unmutedCategory === 'other',
+            'hide-portrait': true,
           }"
           @click="$store.dispatch('setMuteCategory', 'other')"
         >
@@ -58,7 +59,7 @@
           :class="{ button: true, active: $store.state.sort === 'talkgroup' }"
           @click="$store.commit('setSort', 'talkgroup')"
         >
-          Sort by talkgroup ID
+          <span class="hide-portrait">Sort by </span>talkgroup ID
         </div>
         <div class="play button" @click="togglePlay()">
           {{ $store.state.playing ? "Stop" : "Autoplay" }}
@@ -102,6 +103,7 @@ export default {
   position: relative;
   overflow: hidden;
   font-family: "Roboto Mono", monospace;
+  height: 100%;
 }
 
 .nav {
@@ -109,6 +111,14 @@ export default {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+
+  @media only screen and (max-width: 800px) {
+    flex-wrap: wrap;
+  }
+
+  @media only screen and (orientation: portrait) {
+    justify-content: center;
+  }
 }
 
 .nav-container {
@@ -116,6 +126,19 @@ export default {
   padding-left: 1em;
   padding-right: 1em;
   padding-bottom: 0.5em;
+  height: 89px;
+
+  @media only screen and (max-width: 800px) {
+    height: 50px;
+  }
+
+  @media only screen and (max-width: 600px) {
+    height: 70px;
+  }
+
+  @media only screen and (max-width: 400px) {
+    height: 100px;
+  }
 }
 
 div.button {
@@ -138,6 +161,15 @@ div.button {
     font-weight: 500;
     border: 1px solid #efb21e;
   }
+
+  @media only screen and (max-width: 800px) {
+    margin-top: 2px;
+    margin-bottom: 2px;
+  }
+
+  @media only screen and (max-width: 400px) {
+    margin: 3px;
+  }
 }
 
 .title {
@@ -147,5 +179,28 @@ div.button {
   margin: 0.5em;
   padding: 0.25em;
   color: white;
+  min-width: 200px;
+
+  @media only screen and (max-width: 800px) {
+    margin-top: 2px; 
+    margin-bottom: 2px;
+    font-size: 12px;
+  }
+
+  @media only screen and (orientation: portrait) and (max-width: 800px) {
+    text-align: center;
+  }
+
+  @media only screen and (max-width: 400px) {
+    margin-top: 2px;
+    margin-bottom: 2px;
+    font-size: 16px;
+  }
+}
+
+.hide-portrait {
+  @media only screen and (max-width: 800px) {
+    display: none;
+  }
 }
 </style>
