@@ -1,110 +1,112 @@
 <template>
   <div class="timeline" ref="container">
     <svg :width="width" :height="height">
-      <g class="legend">
+      <g transform="translate(0.5px,0.5px)">
         <g
-          v-for="tg in Object.keys(yIndex)"
-          :key="tg"
+          class="current-channel"
+          v-if="playing.length > 0"
           :style="{
-            transform: `translate(0px,${yScale(yIndex[tg])}px)`,
+            transform: `translate(0px,${yScale(
+              yIndex[playing[0].talkgroup]
+            )}px)`,
           }"
         >
-          <text
-            :x="width - label_padding + 10"
+          <rect
+            :x="0"
             :y="0"
-            :dy="10"
-            :class="{ muted: $store.state.muted_talkgroups[tg] }"
-            @click="
-              $store.state.muted_talkgroups[tg]
-                ? $store.commit('unmute', tg)
-                : $store.commit('mute', tg)
-            "
-          >
-            {{
-              $store.state.talkgroups[tg]
-                ? $store.state.talkgroups[tg]["Alpha Tag"]
-                : "Talkgroup " + tg
-            }}
-          </text>
-          <line :x1="0" :x2="width" :y1="0" :y2="0" />
+            :width="width"
+            :height="(height - 2 * padding) / nYs"
+          />
         </g>
-      </g>
-      <g class="xaxis">
-        <g v-for="tick in minorXTicks" :key="tick.valueOf()">
-          <line
-            class="minor"
+        <g class="legend">
+          <g
+            v-for="tg in Object.keys(yIndex)"
+            :key="tg"
+            :style="{
+              transform: `translate(0px,${yScale(yIndex[tg])}px)`,
+            }"
+          >
+            <text
+              :x="width - label_padding + 10"
+              :y="0"
+              :dy="10"
+              :class="{ muted: $store.state.muted_talkgroups[tg] }"
+              @click="
+                $store.state.muted_talkgroups[tg]
+                  ? $store.commit('unmute', tg)
+                  : $store.commit('mute', tg)
+              "
+            >
+              {{
+                $store.state.talkgroups[tg]
+                  ? $store.state.talkgroups[tg]["Alpha Tag"]
+                  : "Talkgroup " + tg
+              }}
+            </text>
+            <line :x1="0" :x2="width" :y1="0" :y2="0" />
+          </g>
+        </g>
+        <g class="xaxis">
+          <g v-for="tick in minorXTicks" :key="tick.valueOf()">
+            <line
+              class="minor"
+              :style="{
+                transform: `translate(${scaleDate(tick)}px,0px)`,
+              }"
+              :y1="padding"
+              :y2="height"
+              :x1="0"
+              :x2="0"
+            />
+          </g>
+          <g
+            v-for="tick in xTicks"
+            :key="tick.valueOf()"
             :style="{
               transform: `translate(${scaleDate(tick)}px,0px)`,
             }"
-            :y1="padding"
-            :y2="height"
-            :x1="0"
-            :x2="0"
+          >
+            <line :y1="padding" :y2="height" :x1="0" :x2="0" />
+            <text :x="0" :y="height - 5" :dx="5">{{ formatDate(tick) }}</text>
+          </g>
+        </g>
+        <g>
+          <rect
+            class="call"
+            v-for="call in calls"
+            :key="call.call_id"
+            :x="0"
+            :y="0"
+            :style="{
+              transform: `translate(${scaleDate(call.start_time)}px,${yScale(
+                yIndex[call.talkgroup]
+              )}px)`,
+              fill: getColor(
+                $store.state.talkgroups[call.talkgroup]
+                  ? $store.state.talkgroups[call.talkgroup].Tag
+                  : 'Other'
+              ),
+            }"
+            :width="((width - 2 * padding) * call.length) / (30 * 60)"
+            :height="(height - 2 * padding) / nYs"
+            @click="call.encrypted ? null : playCall(call)"
+            :class="{
+              playing: playing.map((c) => c.call_id).indexOf(call.call_id) >= 0,
+              queued: queue.map((q) => q.call_id).indexOf(call.call_id) >= 0,
+              listened: listened.indexOf(call.call_id) >= 0,
+              encrypted: call.encrypted,
+              muted: $store.state.muted_talkgroups[call.talkgroup],
+            }"
           />
         </g>
-        <g
-          v-for="tick in xTicks"
-          :key="tick.valueOf()"
-          :style="{
-            transform: `translate(${scaleDate(tick)}px,0px)`,
-          }"
-        >
-          <line :y1="padding" :y2="height" :x1="0" :x2="0" />
-          <text :x="0" :y="height - 5" :dx="5">{{ formatDate(tick) }}</text>
-        </g>
-      </g>
-      <g>
-        <rect
-          v-for="call in calls"
-          :key="call.call_id"
-          :x="0"
-          :y="0"
-          :style="{
-            transform: `translate(${scaleDate(call.start_time)}px,${yScale(
-              yIndex[call.talkgroup]
-            )}px)`,
-            fill: getColor(
-              $store.state.talkgroups[call.talkgroup]
-                ? $store.state.talkgroups[call.talkgroup].Tag
-                : 'Other'
-            ),
-          }"
-          :width="((width - 2 * padding) * call.length) / (30 * 60)"
-          :height="(height - 2 * padding) / nYs"
-          @click="call.encrypted ? null : playCall(call)"
-          :class="{
-            playing: playing.map((c) => c.call_id).indexOf(call.call_id) >= 0,
-            queued: queue.map((q) => q.call_id).indexOf(call.call_id) >= 0,
-            listened: listened.indexOf(call.call_id) >= 0,
-            encrypted: call.encrypted,
-            muted: $store.state.muted_talkgroups[call.talkgroup],
-          }"
-        />
-      </g>
-      <g
-        :class="{ playhead: true, visible: playhead }"
-        :style="{
-          transform: `translate(${Math.floor(xScale(playhead))}px,0px)`,
-          transition: localShift === 0 ? 'none' : '1s transform',
-        }"
-      >
-        <line
-          :x1="Math.floor(localShift)"
-          :x2="Math.floor(localShift)"
-          :y1="0"
-          :y2="height"
-        />
-        <line
-          :x1="Math.floor(localShift) - 10"
-          :x2="Math.floor(localShift) + 10"
-          :y1="height"
-          :y2="height"
-        />
-        <line
-          :x1="Math.floor(localShift) - 10"
-          :x2="Math.floor(localShift) + 10"
-          :y1="1"
-          :y2="1"
+        <Playhead
+          :localShift="localShift"
+          :height="height"
+          :padding="padding"
+          :playing="playing"
+          :xScale="xScale"
+          :playhead="playhead"
+          :playdate="playdate"
         />
       </g>
     </svg>
@@ -120,9 +122,13 @@ import * as d3 from "d3";
 import moment from "moment";
 import { Howl, Howler } from "howler";
 import util from "@/constants/util";
+import Playhead from "./Playhead";
 
 export default {
   name: "Timeline",
+  components: {
+    Playhead,
+  },
   data() {
     return {
       width: 1600,
@@ -235,6 +241,16 @@ export default {
       return current_position;
     },
 
+    playdate() {
+      if (this.playing.length === 0) return "";
+
+      return moment(
+        this.xScale.invert(this.localShift) -
+          this.xScale.invert(0) +
+          moment(this.playing[0].start_time)
+      ).format("h:mm:ss A");
+    },
+
     calls() {
       return this.$store.state.calls;
     },
@@ -250,10 +266,10 @@ export default {
       }
 
       if (this.width < 1400) {
-        return moment(this.maxDate).add(-20, "m");
+        return moment(this.maxDate).add(-15, "m");
       }
 
-      return moment(this.maxDate).add(-30, "m");
+      return moment(this.maxDate).add(-20, "m");
     },
 
     xScale() {
@@ -303,10 +319,10 @@ export default {
       }
 
       if (this.width < 1400) {
-        return this.xScale.ticks(4);
+        return this.xScale.ticks(3);
       }
 
-      return this.xScale.ticks(6);
+      return this.xScale.ticks(4);
     },
 
     minorXTicks() {
@@ -314,9 +330,9 @@ export default {
       if (this.width < 800) {
         ticks = this.xScale.ticks(7);
       } else if (this.width < 1400) {
-        ticks = this.xScale.ticks(14);
+        ticks = this.xScale.ticks(10);
       } else {
-        ticks = this.xScale.ticks(20);
+        ticks = this.xScale.ticks(14);
       }
 
       ticks = ticks.filter(
@@ -331,13 +347,6 @@ export default {
     },
   },
   watch: {
-    // cursor(to, from) {
-    //   this.calls.forEach((call) => {
-    //     if (moment(call.start_time) > from && moment(call.start_time) < to) {
-    //       this.playCall(call);
-    //     }
-    //   });
-    // },
     autoplay(to) {
       if (to) {
         let to_play = this.calls.filter(
@@ -388,7 +397,7 @@ svg {
     fill: white;
   }
 
-  rect {
+  rect.call {
     fill: none;
     stroke: white;
     stroke-width: 0px;
@@ -404,7 +413,7 @@ svg {
     &.encrypted {
       fill: black !important;
       stroke: red;
-      stroke-width: 1px;
+      stroke-width: 0.5px;
       opacity: 1;
 
       &:hover {
@@ -416,12 +425,12 @@ svg {
 
     &.playing {
       stroke: #0099ff;
-      stroke-width: 3px;
+      stroke-width: 2px;
       opacity: 1;
     }
 
     &.queued {
-      stroke-width: 3px;
+      stroke-width: 2px;
       opacity: 1;
     }
 
@@ -475,17 +484,12 @@ svg {
     }
   }
 
-  g.playhead {
+  .current-channel {
     transition: 1s transform;
-    stroke-opacity: 0;
 
-    line {
-      stroke: #0099ff;
-      stroke-width: 1px;
-    }
-
-    &.visible {
-      stroke-opacity: 1;
+    rect {
+      fill: #0099ff;
+      fill-opacity: 0.4;
     }
   }
 }

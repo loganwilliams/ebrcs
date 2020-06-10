@@ -61,7 +61,7 @@
           Sort by talkgroup ID
         </div>
         <div class="play button" @click="togglePlay()">
-          {{ $store.state.playing ? "Stop" : "Play" }}
+          {{ $store.state.playing ? "Stop" : "Autoplay" }}
         </div>
       </div>
     </div>
