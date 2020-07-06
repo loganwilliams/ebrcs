@@ -117,38 +117,13 @@ export default new Vuex.Store({
     setMuteCategory({ state, getters, commit }, category) {
       let muted_talkgroups = {};
 
-      if (category === "police") {
+      if (category !== "all") {
         getters.allTalkgroups.forEach((tg) => {
           if (!state.talkgroups[tg]) {
-            muted_talkgroups[tg] = true;
+            if (category !== "other") muted_talkgroups[tg] = true;
           } else {
             let type = util.methods.getType(state.talkgroups[tg].Tag);
-            if (type !== "police") muted_talkgroups[tg] = true;
-          }
-        });
-      } else if (category === "fire") {
-        getters.allTalkgroups.forEach((tg) => {
-          if (!state.talkgroups[tg]) {
-            muted_talkgroups[tg] = true;
-          } else {
-            let type = util.methods.getType(state.talkgroups[tg].Tag);
-            if (type !== "fire") muted_talkgroups[tg] = true;
-          }
-        });
-      } else if (category === "medical") {
-        getters.allTalkgroups.forEach((tg) => {
-          if (!state.talkgroups[tg]) {
-            muted_talkgroups[tg] = true;
-          } else {
-            let type = util.methods.getType(state.talkgroups[tg].Tag);
-            if (type !== "medical") muted_talkgroups[tg] = true;
-          }
-        });
-      } else if (category === "other") {
-        getters.allTalkgroups.forEach((tg) => {
-          if (state.talkgroups[tg]) {
-            let type = util.methods.getType(state.talkgroups[tg].Tag);
-            if (type !== "other") muted_talkgroups[tg] = true;
+            if (type !== category) muted_talkgroups[tg] = true;
           }
         });
       }

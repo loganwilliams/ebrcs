@@ -16,6 +16,16 @@
         <div
           :class="{
             button: true,
+            active: $store.getters.unmutedCategory === 'prison',
+            'hide-portrait': true,
+          }"
+          @click="$store.dispatch('setMuteCategory', 'prison')"
+        >
+          Prison
+        </div>
+        <div
+          :class="{
+            button: true,
             active: $store.getters.unmutedCategory === 'fire',
           }"
           @click="$store.dispatch('setMuteCategory', 'fire')"
@@ -39,7 +49,7 @@
           }"
           @click="$store.dispatch('setMuteCategory', 'other')"
         >
-          Interop/Other
+          Other
         </div>
         <div
           :class="{ button: true, active: $store.getters.muted.length === 0 }"
