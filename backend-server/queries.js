@@ -19,14 +19,24 @@ const addCall = (request, response) => {
     encrypted,
     filename,
     key,
+    system,
   } = request.body;
 
   if (key !== process.env.KEY) return;
   if (+length === 0) return;
 
   pool.query(
-    "INSERT INTO calls (talkgroup, tgtag, length, start_time, stop_time, encrypted, filename) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-    [talkgroup, tgtag, length, start_time, stop_time, encrypted, filename],
+    "INSERT INTO calls (talkgroup, tgtag, length, start_time, stop_time, encrypted, filename, system) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+    [
+      talkgroup,
+      tgtag,
+      length,
+      start_time,
+      stop_time,
+      encrypted,
+      filename,
+      system,
+    ],
     (error, result) => {
       if (error) {
         throw error;
