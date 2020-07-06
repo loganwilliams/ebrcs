@@ -4,12 +4,11 @@ export default {
       if (
         tag === "Law Dispatch" ||
         tag === "Law Tac" ||
-        tag === "Corrections" ||
         tag === "Law Talk" ||
         tag === "Military"
       )
         return "police";
-      if (tag === "Prison") return "prison";
+      if (tag === "Prison" || tag === "Corrections") return "prison";
       if (tag === "EMS Dispatch" || tag === "EMS-Tac" || tag === "Hospital")
         return "medical";
       if (tag === "Fire Dispatch" || tag === "Fire-Tac" || tag === "Fire-Talk")
