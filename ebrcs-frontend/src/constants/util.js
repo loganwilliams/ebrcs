@@ -9,6 +9,7 @@ export default {
         tag === "Military"
       )
         return "police";
+      if (tag === "Prison") return "prison";
       if (tag === "EMS Dispatch" || tag === "EMS-Tac" || tag === "Hospital")
         return "medical";
       if (tag === "Fire Dispatch" || tag === "Fire-Tac" || tag === "Fire-Talk")
@@ -23,6 +24,7 @@ export default {
       if (type === "police") return "#74edeb";
       if (type === "medical") return "#fc62ef";
       if (type === "fire") return "#fc8d62";
+      if (type === "prison") return "#ffff63";
 
       return "#8cdb65";
     },
