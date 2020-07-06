@@ -18,12 +18,10 @@ app.ws("/new", function (ws, req) {
         length: parseFloat(msg.call.length),
         encrypted: msg.call.encrypted === "true",
         filename: msg.call.filename,
-        system: msg.call.system,
+        system: msg.call.shortName,
       };
 
       if (call.length > 0.1 && call.length < 1000) {
-        console.log(call);
-
         axios
           .post("http://api.ebrcs.live/call", {
             ...call,
@@ -46,7 +44,7 @@ app.ws("/new", function (ws, req) {
           length: 5,
           encrypted: msg.call.encrypted === "true",
           filename: "na",
-          system: msg.call.system,
+          system: msg.call.shortName,
         };
 
         console.log(call);
